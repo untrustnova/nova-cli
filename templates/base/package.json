@@ -1,0 +1,26 @@
+{
+  "name": "__APP_NAME__",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nova dev",
+    "build": "nova build",
+    "start": "node server.js",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "drizzle-orm": "^0.40.0",
+    "@untrustnova/nova-framework": "^0.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "eslint": "^9.18.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react": "^7.37.3",
+    "vite": "^6.0.0"
+  }
+}

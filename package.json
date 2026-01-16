@@ -1,0 +1,23 @@
+{
+  "name": "@untrustnova/nova-cli",
+  "version": "0.1.0",
+  "description": "Nova.js CLI",
+  "type": "module",
+  "bin": {
+    "nova": "./bin/nova.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "bin",
+    "src",
+    "templates"
+  ],
+  "keywords": [
+    "nova",
+    "nova-js",
+    "cli"
+  ],
+  "license": "MIT"
+}
