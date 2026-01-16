@@ -33,7 +33,8 @@ npm run dev
 ## Struktur Template
 
 Template menggunakan:
-- `nova.config.js` sebagai konfigurasi utama (tanpa `vite.config.js`)
+- `nova.config.js` sebagai konfigurasi utama
+- `vite.config.js` di-generate dari `nova.config.js`
 - Routing hybrid (object + file-based)
 - Folder `app/` untuk server-side
 - Folder `web/` untuk frontend React
@@ -44,7 +45,11 @@ Template menggunakan:
 (`@untrustnova/nova-framework` termasuk). Gunakan `--no-install` jika ingin skip instalasi,
 atau set `NOVA_TEMPLATE_REPO` untuk mengganti repo template.
 
-`nova dev` akan menjalankan `server.js` dan Vite dev server secara bersamaan.
+`nova dev` menjalankan `server.js` dan Vite dev server secara bersamaan.
+
+Dev URLs:
+- Backend API: `http://localhost:3000`
+- Frontend (Vite): `http://localhost:5173`
 
 Perintah `db:*` adalah pembungkus untuk `drizzle-kit`.
 Jika belum terpasang, install: `npm install -D drizzle-kit`.

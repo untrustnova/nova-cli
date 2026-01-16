@@ -17,7 +17,7 @@ export async function run(args) {
   }
 
   if (command === '--version' || command === '-v') {
-    console.log('nova-cli 0.1.0');
+    logInfo('Nova CLI v1.1.0');
     return;
   }
 
@@ -48,17 +48,19 @@ export async function run(args) {
         await createMigration(rest[0]);
         break;
       default:
-        console.error(`[nova] unknown command "${command}"`);
+        logError(`Unknown command "${command}"`);
         printHelp();
     }
   } catch (error) {
-    console.error(`[nova] ${error.message}`);
+    logError(error.message);
     process.exitCode = 1;
   }
 }
 
 function printHelp() {
-  console.log(`Nova CLI
+  console.log(`[nova] Nova CLI
+Version: 1.1.0
+Node: ${process.version}
 
 Usage:
   nova new <name> [--no-install]
@@ -91,7 +93,7 @@ async function scaffoldProject(args) {
   }
 
   const remoteTemplate = await tryFetchTemplate(
-    process.env.NOVA_TEMPLATE_REPO || 'https://github.com/nova-js/nova',
+    process.env.NOVA_TEMPLATE_REPO || 'https://github.com/untrustnova/nova',
   );
 
   const source = remoteTemplate?.path || templateRoot;
@@ -99,7 +101,9 @@ async function scaffoldProject(args) {
     '__APP_NAME__': name,
   });
 
-  console.log(`[nova] project created at ${target}`);
+  await ensureViteConfig(target);
+
+  logSuccess(`Project created at ${target}`);
 
   if (remoteTemplate?.cleanup) {
     await remoteTemplate.cleanup();
@@ -107,7 +111,7 @@ async function scaffoldProject(args) {
 
   if (shouldInstall) {
     await runCommand('npm', ['install'], { cwd: target });
-    console.log('[nova] dependencies installed');
+    logSuccess('Dependencies installed');
   }
 }
 
@@ -133,7 +137,7 @@ export default class ${className}Controller extends Controller {
 `;
 
   await writeFile(target, body, 'utf8');
-  console.log(`[nova] controller created: ${relativePath(target)}`);
+  logSuccess(`Controller created: ${relativePath(target)}`);
 }
 
 async function createMiddleware(name) {
@@ -156,7 +160,7 @@ async function createMiddleware(name) {
 `;
 
   await writeFile(target, body, 'utf8');
-  console.log(`[nova] middleware created: ${relativePath(target)}`);
+  logSuccess(`Middleware created: ${relativePath(target)}`);
 }
 
 async function createMigration(name) {
@@ -181,7 +185,7 @@ export async function down(db) {
 `;
 
   await writeFile(target, body, 'utf8');
-  console.log(`[nova] migration created: ${relativePath(target)}`);
+  logSuccess(`Migration created: ${relativePath(target)}`);
 }
 
 async function runDrizzle(command) {
@@ -198,16 +202,35 @@ async function runDev() {
     shell: process.platform === 'win32',
   });
 
-  process.on('SIGINT', () => server.kill('SIGINT'));
-  process.on('SIGTERM', () => server.kill('SIGTERM'));
+  let viteServer = null;
+  let shuttingDown = false;
 
-  await runViteDev(config);
+  const shutdown = async (signal) => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    server.kill(signal);
+    if (viteServer) {
+      await viteServer.close();
+    }
+    process.exit(0);
+  };
+
+  process.on('SIGINT', () => shutdown('SIGINT'));
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+
+  try {
+    viteServer = await runViteDev(config);
+  } catch (error) {
+    logError(error.message);
+    await shutdown('SIGTERM');
+  }
 }
 
 async function runBuild() {
   const config = await loadNovaConfig();
   const { runBuild: runViteBuild } = await loadFrameworkModule('dev');
   await runViteBuild(config);
+  logSuccess('Build completed');
 }
 
 async function runCommand(command, args, options = {}) {
@@ -331,6 +354,27 @@ function timestamp() {
 
 function relativePath(path) {
   return path.replace(process.cwd() + '/', '');
+}
+
+async function ensureViteConfig(targetRoot) {
+  const viteConfigPath = resolve(targetRoot, 'vite.config.js');
+  if (await pathExists(viteConfigPath)) return;
+
+  const contents = `import { defineConfig } from 'vite';\nimport novaConfig from './nova.config.js';\nimport { resolveViteConfig } from '@untrustnova/nova-framework/config/resolveVite';\n\nexport default defineConfig(async () => resolveViteConfig(novaConfig));\n`;
+  await writeFile(viteConfigPath, contents, 'utf8');
+  logSuccess('vite.config.js generated from nova.config.js');
+}
+
+function logInfo(message) {
+  console.log(`[nova] ${message}`);
+}
+
+function logSuccess(message) {
+  console.log(`[nova] ${message}`);
+}
+
+function logError(message) {
+  console.error(`[nova] ${message}`);
 }
 
 async function loadNovaConfig() {

@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Nova.js CLI",
   "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
   "bin": {
     "nova": "./bin/nova.js"
   },
